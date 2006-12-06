@@ -47,7 +47,7 @@ if ( $options['show-request'] )
 if ( $options['show-response'] )
 {
     $cli->output( 'SOAP response:' );
-    $cli->output( $client->request );
+    $cli->output( $client->response );
 }
         
 if ( $client->fault )

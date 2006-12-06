@@ -8,14 +8,19 @@ or in settings/override/site.ini.append(.php):
 [ExtensionSettings]
 ActiveExtensions[]=nusoap
 
+2. Move NuSOAP ini file
+*****************************
 
- 2. Move soap server
+Copy or move nusoap.ini from the install directory of the NuSOAP extension to your eZ publish settings directory.
+
+
+ 3. Move soap server
 *****************************
 
 Copy or move nusoap.php from the install directory of the NuSOAP extension to your eZ publish root directory.
 
 
- 3. Configure a virtual host
+ 4. Configure a virtual host
 *****************************
 
 Add a new virtual host to your Apache webserver which rewrites all requests to nosuap.php in your 
@@ -33,7 +38,7 @@ eZ publish root directory.
 </VirtualHost>
 
 
- 4. Testing
+ 5. Testing
 *****************************
 
 You can test if the extension works correct by navigating with your web browser to the virtual host 
