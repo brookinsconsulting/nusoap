@@ -1,0 +1,7 @@
+The post-install directory should be moved to the packaging directory.
+
+Add the following to the <install> element in package.xml:
+
+<item type="ezinstallscript"
+      filename="nusoapinstallscript"
+      sub-directory="post-install" />
