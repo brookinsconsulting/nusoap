@@ -17,6 +17,12 @@ class NuSOAPInstallScript extends eZInstallScriptPackageInstaller
                                               'validate' => 'validateDefaultSettingsStep',
                                               'commit' => 'commitDefaultSettingsStep' ),
                           'template' => 'nusoapinstalldefaultsettings.tpl' );
+        $steps[] = array( 'id' => 'nusoap_test',
+                          'name' => 'NuSOAP test',
+                          'methods' => array( 'initialize' => 'initializeTestStep',
+                                              'validate' => 'validateTestStep',
+                                              'commit' => 'commitTestStep' ),
+                          'template' => 'nusoapinstalltest.tpl' );
         $this->eZPackageInstallationHandler( $package,
                                              $type,
                                              $installItem,
@@ -123,6 +129,102 @@ class NuSOAPInstallScript extends eZInstallScriptPackageInstaller
 
 
     function commitDefaultSettingsStep( &$package, &$http, $step, &$persistentData, &$tpl )
+    {
+        return true;
+    }
+
+    function initializeTestStep( &$package, &$http, $step, &$persistentData, &$tpl, &$module )
+    {
+        if ( array_key_exists( 'name', $persistentData ) )
+        {
+            $name = $persistentData['name'];
+        }
+        else
+        {
+            $name = "eZ celeb";
+        }
+
+        if ( array_key_exists( 'wsdl_url', $persistentData ) )
+        {
+            $WSDLurl = $persistentData['wsdl_url'];
+        }
+        else
+        {
+            $WSDLurl = "http://soap.example.com/helloworld?wsdl";
+        }
+
+        if ( array_key_exists( 'soap_result', $persistentData ) )
+        {
+            $tpl->setVariable( 'result', $persistentData['soap_result'] );
+        }
+
+        $persistentData['wsdl_url'] = $WSDLurl;
+        $persistentData['name'] = $name;
+        $tpl->setVariable( 'wsdl_url', $WSDLurl );
+        $tpl->setVariable( 'name', $name );
+
+        return true;
+    }
+
+    function validateTestStep( &$package, &$http, $currentStepID, &$stepMap, &$persistentData, &$errorList )
+    {
+        unset( $persistentData['soap_result'] );
+
+        if ( $http->hasPostVariable( 'TestingDone' ) )
+        {
+            return true;
+        }
+
+        $WSDLurl = $persistentData['wsdl_url'];
+        $name = $persistentData['name'];
+
+        if ( $http->hasPostVariable( 'WSDLurl' ) )
+        {
+            $WSDLurl = $http->postVariable( 'WSDLurl' );
+        }
+
+        if ( $http->hasPostVariable( 'Name' ) )
+        {
+            $name = $http->postVariable( 'Name' );
+        }
+
+        $persistentData['wsdl_url'] = $WSDLurl;
+        $persistentData['name'] = $name;
+
+        ext_class( 'nusoap', 'nusoap' );
+        $client = new soapclient( $WSDLurl, true );
+        $err = $client->getError( );
+
+        if ( $err )
+        {
+            $errorList[] = array( 'field' => 'SOAP client', 'description' => $err );
+            return false;
+        }
+
+        $result = $client->call( 'hello', array( 'name' => $name ) );
+
+        eZDebug::writeDebug( $client->request );
+        eZDebug::writeDebug( $client->response );
+
+        if ( $client->fault )
+        {
+            $errorList[] = array( 'field' => 'SOAP client', 'description' => $result );
+            return false;
+        }
+
+        $err = $client->getError();
+        if ( $err )
+        {
+            $errorList[] = array( 'field' => 'SOAP client', 'description' => $error );
+            return false;
+        }
+
+        $persistentData['soap_result'] = $result;
+
+        return false;
+    }
+
+    function commitTestStep( &$package, &$http, $step, &$persistentData, &$tpl )
     {
         return true;
     }
