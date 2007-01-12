@@ -436,3 +436,13 @@
 - soap_server: when generating a fault while debug_flag is true, put debug into faultdetail
 - wsdl: add enumeration parameter to addSimpleType
 - xmlschema: add enumeration parameter to addSimpleType
+
+2006-02-02, version 0.7.2
+- soapclient: initialize paramArrayStr to improve proxy generation
+- soap_parser: handle PHP5 soapclient's incorrect transmission of WSDL-described SOAP encoded arrays.
+- soap_server: don't assume _SERVER['HTTPS'] is set; try HTTP_SERVER_VARS['HTTPS'] if it is not
+- soap_server: "flatten out" the parameter array to call_user_func_array (thanks André Mamitzsch)
+- soap_server: make thrown exceptions conform to specs
+- wsdl: use serialize_val to serialize an array when the XSD type is soapenc:Array (JBoss/Axis does this)
+- wsdl: change formatting of serialized XML for the WSDL
+- xmlschema: change formatting of namespaces when serializing XML for the schema

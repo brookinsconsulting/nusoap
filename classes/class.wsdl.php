@@ -7,7 +7,7 @@
 * parses a WSDL file, allows access to it's data, other utility methods
 * 
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.wsdl.php,v 1.56 2005/08/04 01:27:42 snichol Exp $
+* @version  $Id: class.wsdl.php,v 1.57 2006/02/02 15:52:34 snichol Exp $
 * @access public 
 */
 class wsdl extends nusoap_base {
@@ -841,7 +841,7 @@ class wsdl extends nusoap_base {
 		} 
 		// types
 		if (count($this->schemas)>=1) {
-			$xml .= "\n<types>";
+			$xml .= "\n<types>\n";
 			foreach ($this->schemas as $ns => $list) {
 				foreach ($list as $xs) {
 					$xml .= $xs->serializeSchema();
@@ -878,7 +878,7 @@ class wsdl extends nusoap_base {
 						} else {
 							$elementortype = 'type';
 						}
-						$xml .= '<part name="' . $partName . '" ' . $elementortype . '="' . $typePrefix . ':' . $this->getLocalPart($partType) . '" />';
+						$xml .= "\n" . '  <part name="' . $partName . '" ' . $elementortype . '="' . $typePrefix . ':' . $this->getLocalPart($partType) . '" />';
 					}
 				}
 				$xml .= '</message>';
@@ -890,38 +890,38 @@ class wsdl extends nusoap_base {
 			$portType_xml = '';
 			foreach($this->bindings as $bindingName => $attrs) {
 				$binding_xml .= "\n<binding name=\"" . $bindingName . '" type="tns:' . $attrs['portType'] . '">';
-				$binding_xml .= '<soap:binding style="' . $attrs['style'] . '" transport="' . $attrs['transport'] . '"/>';
+				$binding_xml .= "\n" . '  <soap:binding style="' . $attrs['style'] . '" transport="' . $attrs['transport'] . '"/>';
 				$portType_xml .= "\n<portType name=\"" . $attrs['portType'] . '">';
 				foreach($attrs['operations'] as $opName => $opParts) {
-					$binding_xml .= '<operation name="' . $opName . '">';
-					$binding_xml .= '<soap:operation soapAction="' . $opParts['soapAction'] . '" style="'. $opParts['style'] . '"/>';
+					$binding_xml .= "\n" . '  <operation name="' . $opName . '">';
+					$binding_xml .= "\n" . '    <soap:operation soapAction="' . $opParts['soapAction'] . '" style="'. $opParts['style'] . '"/>';
 					if (isset($opParts['input']['encodingStyle']) && $opParts['input']['encodingStyle'] != '') {
 						$enc_style = ' encodingStyle="' . $opParts['input']['encodingStyle'] . '"';
 					} else {
 						$enc_style = '';
 					}
-					$binding_xml .= '<input><soap:body use="' . $opParts['input']['use'] . '" namespace="' . $opParts['input']['namespace'] . '"' . $enc_style . '/></input>';
+					$binding_xml .= "\n" . '    <input><soap:body use="' . $opParts['input']['use'] . '" namespace="' . $opParts['input']['namespace'] . '"' . $enc_style . '/></input>';
 					if (isset($opParts['output']['encodingStyle']) && $opParts['output']['encodingStyle'] != '') {
 						$enc_style = ' encodingStyle="' . $opParts['output']['encodingStyle'] . '"';
 					} else {
 						$enc_style = '';
 					}
-					$binding_xml .= '<output><soap:body use="' . $opParts['output']['use'] . '" namespace="' . $opParts['output']['namespace'] . '"' . $enc_style . '/></output>';
-					$binding_xml .= '</operation>';
-					$portType_xml .= '<operation name="' . $opParts['name'] . '"';
+					$binding_xml .= "\n" . '    <output><soap:body use="' . $opParts['output']['use'] . '" namespace="' . $opParts['output']['namespace'] . '"' . $enc_style . '/></output>';
+					$binding_xml .= "\n" . '  </operation>';
+					$portType_xml .= "\n" . '  <operation name="' . $opParts['name'] . '"';
 					if (isset($opParts['parameterOrder'])) {
 					    $portType_xml .= ' parameterOrder="' . $opParts['parameterOrder'] . '"';
 					} 
 					$portType_xml .= '>';
 					if(isset($opParts['documentation']) && $opParts['documentation'] != '') {
-						$portType_xml .= '<documentation>' . htmlspecialchars($opParts['documentation']) . '</documentation>';
+						$portType_xml .= "\n" . '    <documentation>' . htmlspecialchars($opParts['documentation']) . '</documentation>';
 					}
-					$portType_xml .= '<input message="tns:' . $opParts['input']['message'] . '"/>';
-					$portType_xml .= '<output message="tns:' . $opParts['output']['message'] . '"/>';
-					$portType_xml .= '</operation>';
+					$portType_xml .= "\n" . '    <input message="tns:' . $opParts['input']['message'] . '"/>';
+					$portType_xml .= "\n" . '    <output message="tns:' . $opParts['output']['message'] . '"/>';
+					$portType_xml .= "\n" . '  </operation>';
 				} 
-				$portType_xml .= '</portType>';
-				$binding_xml .= '</binding>';
+				$portType_xml .= "\n" . '</portType>';
+				$binding_xml .= "\n" . '</binding>';
 			} 
 			$xml .= $portType_xml . $binding_xml;
 		} 
@@ -929,12 +929,12 @@ class wsdl extends nusoap_base {
 		$xml .= "\n<service name=\"" . $this->serviceName . '">';
 		if (count($this->ports) >= 1) {
 			foreach($this->ports as $pName => $attrs) {
-				$xml .= '<port name="' . $pName . '" binding="tns:' . $attrs['binding'] . '">';
-				$xml .= '<soap:address location="' . $attrs['location'] . ($debug ? '?debug=1' : '') . '"/>';
-				$xml .= '</port>';
+				$xml .= "\n" . '  <port name="' . $pName . '" binding="tns:' . $attrs['binding'] . '">';
+				$xml .= "\n" . '    <soap:address location="' . $attrs['location'] . ($debug ? '?debug=1' : '') . '"/>';
+				$xml .= "\n" . '  </port>';
 			} 
 		} 
-		$xml .= '</service>';
+		$xml .= "\n" . '</service>';
 		return $xml . "\n</definitions>";
 	} 
 	
@@ -1159,7 +1159,7 @@ class wsdl extends nusoap_base {
 
 			if($ns == $this->XMLSchemaVersion || $ns == 'http://schemas.xmlsoap.org/soap/encoding/'){
 				$this->debug('in serializeType: type namespace indicates XML Schema or SOAP Encoding type');
-				if ($unqualified  && $use == 'literal') {
+				if ($unqualified && $use == 'literal') {
 					$elementNS = " xmlns=\"\"";
 				} else {
 					$elementNS = '';
@@ -1174,6 +1174,10 @@ class wsdl extends nusoap_base {
 					}
 					$this->debug("in serializeType: returning: $xml");
 					return $xml;
+				}
+				if ($uqType == 'Array') {
+					// JBoss/Axis does this sometimes
+					return $this->serialize_val($value, $name, false, false, false, false, $use);
 				}
 		    	if ($uqType == 'boolean') {
 		    		if ((is_string($value) && $value == 'false') || (! $value)) {

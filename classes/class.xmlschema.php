@@ -11,7 +11,7 @@
 * tutorials I refer to :)
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.xmlschema.php,v 1.39 2005/08/04 01:27:42 snichol Exp $
+* @version  $Id: class.xmlschema.php,v 1.40 2006/02/02 15:52:34 snichol Exp $
 * @access   public
 */
 class XMLSchema extends nusoap_base  {
@@ -602,7 +602,7 @@ class XMLSchema extends nusoap_base  {
 		// finish 'er up
 		$el = "<$schemaPrefix:schema targetNamespace=\"$this->schemaTargetNamespace\"\n";
 		foreach (array_diff($this->usedNamespaces, $this->enclosingNamespaces) as $nsp => $ns) {
-			$el .= " xmlns:$nsp=\"$ns\"\n";
+			$el .= " xmlns:$nsp=\"$ns\"";
 		}
 		$xml = $el . ">\n".$xml."</$schemaPrefix:schema>\n";
 		return $xml;

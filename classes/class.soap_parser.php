@@ -8,7 +8,7 @@
 * soap_parser class parses SOAP XML messages into native PHP values
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.soap_parser.php,v 1.36 2005/08/04 01:27:42 snichol Exp $
+* @version  $Id: class.soap_parser.php,v 1.37 2006/02/02 15:52:34 snichol Exp $
 * @access   public
 */
 class soap_parser extends nusoap_base {
@@ -216,17 +216,21 @@ class soap_parser extends nusoap_base {
 					$this->methodNamespace = $value;
 				}
 			// if it's a type declaration, set type
-            } elseif($key_localpart == 'type'){
-            	$value_prefix = $this->getPrefix($value);
-                $value_localpart = $this->getLocalPart($value);
-				$this->message[$pos]['type'] = $value_localpart;
-				$this->message[$pos]['typePrefix'] = $value_prefix;
-                if(isset($this->namespaces[$value_prefix])){
-                	$this->message[$pos]['type_namespace'] = $this->namespaces[$value_prefix];
-                } else if(isset($attrs['xmlns:'.$value_prefix])) {
-					$this->message[$pos]['type_namespace'] = $attrs['xmlns:'.$value_prefix];
-                }
-				// should do something here with the namespace of specified type?
+        } elseif($key_localpart == 'type'){
+        		if (isset($this->message[$pos]['type']) && $this->message[$pos]['type'] == 'array') {
+        			// do nothing: already processed arrayType
+        		} else {
+	            	$value_prefix = $this->getPrefix($value);
+	                $value_localpart = $this->getLocalPart($value);
+					$this->message[$pos]['type'] = $value_localpart;
+					$this->message[$pos]['typePrefix'] = $value_prefix;
+	                if(isset($this->namespaces[$value_prefix])){
+	                	$this->message[$pos]['type_namespace'] = $this->namespaces[$value_prefix];
+	                } else if(isset($attrs['xmlns:'.$value_prefix])) {
+						$this->message[$pos]['type_namespace'] = $attrs['xmlns:'.$value_prefix];
+	                }
+					// should do something here with the namespace of specified type?
+				}
 			} elseif($key_localpart == 'arrayType'){
 				$this->message[$pos]['type'] = 'array';
 				/* do arrayType ereg here
@@ -534,7 +538,7 @@ class soap_parser extends nusoap_base {
             //} elseif($this->message[$pos]['type'] == 'SOAPStruct' || $this->message[$pos]['type'] == 'struct') {
 		    } else {
 	    		// Apache Vector type: treat as an array
-                $this->debug('in buildVal, adding Java Vector '.$this->message[$pos]['name']);
+                $this->debug('in buildVal, adding Java Vector or generic compound type '.$this->message[$pos]['name']);
 				if ($this->message[$pos]['type'] == 'Vector' && $this->message[$pos]['type_namespace'] == 'http://xml.apache.org/xml-soap') {
 					$notstruct = 1;
 				} else {
@@ -577,18 +581,27 @@ class soap_parser extends nusoap_base {
 					}
 				}
 			}
-			return is_array($params) ? $params : array();
+			$ret = is_array($params) ? $params : array();
+			$this->debug('in buildVal, return:');
+			$this->appendDebug($this->varDump($ret));
+			return $ret;
 		} else {
         	$this->debug('in buildVal, no children, building scalar');
 			$cdata = isset($this->message[$pos]['cdata']) ? $this->message[$pos]['cdata'] : '';
         	if (isset($this->message[$pos]['type'])) {
-				return $this->decodeSimple($cdata, $this->message[$pos]['type'], isset($this->message[$pos]['type_namespace']) ? $this->message[$pos]['type_namespace'] : '');
+				$ret = $this->decodeSimple($cdata, $this->message[$pos]['type'], isset($this->message[$pos]['type_namespace']) ? $this->message[$pos]['type_namespace'] : '');
+				$this->debug("in buildVal, return: $ret");
+				return $ret;
 			}
 			$parent = $this->message[$pos]['parent'];
 			if (isset($this->message[$parent]['type']) && ($this->message[$parent]['type'] == 'array') && isset($this->message[$parent]['arrayType'])) {
-				return $this->decodeSimple($cdata, $this->message[$parent]['arrayType'], isset($this->message[$parent]['arrayTypeNamespace']) ? $this->message[$parent]['arrayTypeNamespace'] : '');
+				$ret = $this->decodeSimple($cdata, $this->message[$parent]['arrayType'], isset($this->message[$parent]['arrayTypeNamespace']) ? $this->message[$parent]['arrayTypeNamespace'] : '');
+				$this->debug("in buildVal, return: $ret");
+				return $ret;
 			}
-           	return $this->message[$pos]['cdata'];
+           	$ret = $this->message[$pos]['cdata'];
+			$this->debug("in buildVal, return: $ret");
+           	return $ret;
 		}
 	}
 }

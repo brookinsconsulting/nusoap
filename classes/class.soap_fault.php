@@ -8,7 +8,7 @@
 * Mainly used for returning faults from deployed functions
 * in a server instance.
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.soap_fault.php,v 1.12 2005/07/27 19:24:42 snichol Exp $
+* @version  $Id: class.soap_fault.php,v 1.13 2006/02/02 15:52:34 snichol Exp $
 * @access public
 */
 class soap_fault extends nusoap_base {
@@ -40,7 +40,7 @@ class soap_fault extends nusoap_base {
 	/**
 	* constructor
     *
-    * @param string $faultcode (client | server)
+    * @param string $faultcode (SOAP-ENV:Client | SOAP-ENV:Server)
     * @param string $faultactor only used when msg routed between multiple actors
     * @param string $faultstring human readable error message
     * @param mixed $faultdetail detail, typically a string or array of string

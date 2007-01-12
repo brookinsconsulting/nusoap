@@ -19,7 +19,7 @@
 * unset($soapclient);
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.soapclient.php,v 1.52 2005/07/27 19:24:42 snichol Exp $
+* @version  $Id: class.soapclient.php,v 1.53 2006/02/02 15:52:34 snichol Exp $
 * @access   public
 */
 class soapclient extends nusoap_base  {
@@ -656,6 +656,7 @@ class soapclient extends nusoap_base  {
 					$paramCommentStr = substr($paramCommentStr, 0, strlen($paramCommentStr)-2);
 				} else {
 					$paramStr = '';
+					$paramArrayStr = '';
 					$paramCommentStr = 'void';
 				}
 				$opData['namespace'] = !isset($opData['namespace']) ? 'http://testuri.com' : $opData['namespace'];
