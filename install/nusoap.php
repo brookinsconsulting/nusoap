@@ -43,6 +43,23 @@ $access = changeAccess( $access );
 $GLOBALS['eZCurrentAccess'] =& $access;
 // Siteaccess activation end
 
+/*!
+ Reads settings from i18n.ini and passes them to eZTextCodec.
+*/
+function eZUpdateTextCodecSettings()
+{
+    $ini =& eZINI::instance( 'i18n.ini' );
+
+    list( $i18nSettings['internal-charset'], $i18nSettings['http-charset'], $i18nSettings['mbstring-extension'] ) =
+        $ini->variableMulti( 'CharacterSettings', array( 'Charset', 'HTTPCharset', 'MBStringExtension' ), array( false, false, 'enabled' ) );
+
+    include_once( 'lib/ezi18n/classes/eztextcodec.php' );
+    eZTextCodec::updateSettings( $i18nSettings );
+}
+
+// Initialize text codec settings
+eZUpdateTextCodecSettings();
+
 // Load modules
 $moduleRepositories = array();
 $moduleINI =& eZINI::instance( 'module.ini' );
@@ -87,12 +104,51 @@ $availableServices = $soapINI->variable( 'GeneralSettings', 'AvailableServices' 
 if ( $serviceIdentifier and $enableSOAP == 'true' and in_array( $serviceIdentifier, $availableServices ) )
 {
     $serviceBlock = 'Service_' . $serviceIdentifier;
-    
+
     eZSys::init( 'nusoap.php' );
+
+    include_once( 'kernel/classes/datatypes/ezuser/ezuser.php' );
+
+    // Login if we have username and password.
+    if ( isset( $_SERVER['PHP_AUTH_USER'] ) and isset( $_SERVER['PHP_AUTH_PW'] ) )
+    {
+        eZUser::loginUser( $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] );
+    }
 
     include_once( 'extension/nusoap/classes/nusoap.php' );
 
     $server = new soap_server( );
+
+    /*
+        \todo Replace INI checking of charset with API call charset checking
+    */
+    $intIni =& eZINI::instance( 'i18n.ini' );
+    $charset = strtoupper( $intIni->variable( 'CharacterSettings', 'Charset' ) );
+
+    switch ( $charset )
+    {
+        case 'ISO-8859-1':
+        case 'LATIN-1':
+        {
+            // NuSOAP uses ISO-8859-1 by default, so we do not have to do anything special
+        } break;
+
+        case 'UTF-8':
+        case 'UTF8':
+        {
+            $server->soap_defencoding = 'UTF-8';
+            $server->decode_utf8 = false;
+        } break;
+
+        default:
+        {
+            /*
+                \todo Maybe add some kind of error handling, NuSOAP unsupported charset.
+                NuSOAP does not support automatic encoding conversion of return messages.
+                The service plugins probably should encode values in the SOAP charset themselves.
+            */
+        }
+    }
 
     $server->configureWSDL( $soapINI->variable( $serviceBlock, 'ServiceName' ), $soapINI->variable( $serviceBlock, 'ServiceNamespace' ) );
 
@@ -122,12 +178,12 @@ else
     $tpl =& templateInit( );
 
     $services = array( );
-   
+
     foreach ( $availableServices as $service )
     {
         $services[$service] = $soapINI->variable( 'Service_' . $service, 'ServiceName' );
     }
-    
+
     $tpl->setVariable( 'services', $services );
 
     $result =& $tpl->fetch( 'design:nusoap/404.tpl' );

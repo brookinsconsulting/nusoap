@@ -193,6 +193,39 @@ class NuSOAPInstallScript extends eZInstallScriptPackageInstaller
 
         ext_class( 'nusoap', 'nusoap' );
         $client = new soapclient( $WSDLurl, true );
+
+        /*
+            \todo Replace INI checking of charset with API call charset checking
+        */
+        include_once( 'lib/ezutils/classes/ezini.php' );
+        $intIni =& eZINI::instance( 'i18n.ini' );
+        $charset = strtoupper( $intIni->variable( 'CharacterSettings', 'Charset' ) );
+
+        eZDebug::writeDebug( $charset, 'internal charset' );
+        switch ( $charset )
+        {
+            case 'ISO-8859-1':
+            case 'LATIN-1':
+            {
+                // NuSOAP uses ISO-8859-1 by default, so we do not have to do anything special
+            } break;
+
+            case 'UTF-8':
+            case 'UTF8':
+            {
+                $client->decodeUTF8( false );
+                $client->soap_defencoding = 'UTF-8';
+            } break;
+
+            default:
+            {
+                /*
+                    \todo Maybe add some kind of error handling, NuSOAP unsupported charset.
+                    The service plugins probably should decode values to the eZ charset themselves.
+                */
+            }
+        }
+
         $err = $client->getError( );
 
         if ( $err )
