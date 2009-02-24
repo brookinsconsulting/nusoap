@@ -1,11 +1,10 @@
 #!/usr/bin/env php
 <?php
 
-include_once( 'lib/ezutils/classes/ezcli.php' );
-include_once( 'kernel/classes/ezscript.php' );
+require_once 'autoload.php';
 
-$cli =& eZCLI::instance();
-$script =& eZScript::instance( array( 'description' => 'HelloWorld SOAP client',
+$cli = eZCLI::instance();
+$script = eZScript::instance( array( 'description' => 'HelloWorld SOAP client',
                                       'use-session' => false,
                                       'use-modules' => false,
                                       'use-extensions' => true ) );
@@ -22,15 +21,15 @@ if ( count( $options['arguments'] ) < 2 )
     $script->shutdown( 1, 'wrong argument count' );
 }
 
-$wsdlUri =& $options['arguments'][0];
-$name =& $options['arguments'][1];
+$wsdlUri = $options['arguments'][0];
+$name = $options['arguments'][1];
 
-ext_class( 'nusoap', 'nusoap' );
+require_once 'extension/nusoap/classes/nusoap.php';
 
-$client = new soapclient( $wsdlUri, true );
+$client = new nusoap_client( $wsdlUri, true );
 
 $err = $client->getError( );
-    
+
 if ( $err )
 {
     $script->shutdown( 1, $err );
@@ -49,7 +48,7 @@ if ( $options['show-response'] )
     $cli->output( 'SOAP response:' );
     $cli->output( $client->response );
 }
-        
+
 if ( $client->fault )
 {
     $script->shutdown( 1, $result );
@@ -62,7 +61,7 @@ if ( $err )
 {
     $script->shutdown( 1, $err );
 }
-    
+
 $cli->output( $result );
 
 $script->shutdown( 0 );

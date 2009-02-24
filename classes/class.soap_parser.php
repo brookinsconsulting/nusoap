@@ -5,13 +5,14 @@
 
 /**
 *
-* soap_parser class parses SOAP XML messages into native PHP values
+* nusoap_parser class parses SOAP XML messages into native PHP values
 *
 * @author   Dietrich Ayala <dietrich@ganx4.com>
-* @version  $Id: class.soap_parser.php,v 1.37 2006/02/02 15:52:34 snichol Exp $
+* @author   Scott Nichol <snichol@users.sourceforge.net>
+* @version  $Id: class.soap_parser.php,v 1.40 2007/04/17 16:34:03 snichol Exp $
 * @access   public
 */
-class soap_parser extends nusoap_base {
+class nusoap_parser extends nusoap_base {
 
 	var $xml = '';
 	var $xml_encoding = '';
@@ -35,7 +36,8 @@ class soap_parser extends nusoap_base {
 	var $fault_detail = '';
 	var $depth_array = array();
 	var $debug_flag = true;
-	var $soapresponse = NULL;
+	var $soapresponse = NULL;	// parsed SOAP Body
+	var $soapheader = NULL;		// parsed SOAP Header
 	var $responseHeaders = '';	// incoming SOAP headers (text)
 	var $body_position = 0;
 	// for multiref parsing:
@@ -55,7 +57,7 @@ class soap_parser extends nusoap_base {
 	* @param    string $decode_utf8 whether to decode UTF-8 to ISO-8859-1
 	* @access   public
 	*/
-	function soap_parser($xml,$encoding='UTF-8',$method='',$decode_utf8=true){
+	function nusoap_parser($xml,$encoding='UTF-8',$method='',$decode_utf8=true){
 		parent::nusoap_base();
 		$this->xml = $xml;
 		$this->xml_encoding = $encoding;
@@ -87,7 +89,7 @@ class soap_parser extends nusoap_base {
 			} else {
 				$this->debug('No XML declaration');
 			}
-			$this->debug('Entering soap_parser(), length='.strlen($xml).', encoding='.$encoding);
+			$this->debug('Entering nusoap_parser(), length='.strlen($xml).', encoding='.$encoding);
 			// Create an XML parser - why not xml_parser_create_ns?
 			$this->parser = xml_parser_create($this->xml_encoding);
 			// Set the options for parsing the XML data.
@@ -113,10 +115,10 @@ class soap_parser extends nusoap_base {
 				$this->debug('parsed successfully, found root struct: '.$this->root_struct.' of name '.$this->root_struct_name);
 				// get final value
 				$this->soapresponse = $this->message[$this->root_struct]['result'];
-				// get header value: no, because this is documented as XML string
-//				if($this->root_header != '' && isset($this->message[$this->root_header]['result'])){
-//					$this->responseHeaders = $this->message[$this->root_header]['result'];
-//				}
+				// get header value
+				if($this->root_header != '' && isset($this->message[$this->root_header]['result'])){
+					$this->soapheader = $this->message[$this->root_header]['result'];
+				}
 				// resolve hrefs/ids
 				if(sizeof($this->multirefs) > 0){
 					foreach($this->multirefs as $id => $hrefs){
@@ -177,10 +179,10 @@ class soap_parser extends nusoap_base {
 		// set status
 		if($name == 'Envelope'){
 			$this->status = 'envelope';
-		} elseif($name == 'Header'){
+		} elseif($name == 'Header' && $this->status = 'envelope'){
 			$this->root_header = $pos;
 			$this->status = 'header';
-		} elseif($name == 'Body'){
+		} elseif($name == 'Body' && $this->status = 'envelope'){
 			$this->status = 'body';
 			$this->body_position = $pos;
 		// set method
@@ -426,19 +428,40 @@ class soap_parser extends nusoap_base {
 	}
 
 	/**
-	* get the parsed message
+	* get the parsed message (SOAP Body)
 	*
 	* @return	mixed
 	* @access   public
+	* @deprecated	use get_soapbody instead
 	*/
 	function get_response(){
 		return $this->soapresponse;
 	}
 
 	/**
-	* get the parsed headers
+	* get the parsed SOAP Body (NULL if there was none)
 	*
-	* @return	string XML or empty if no headers
+	* @return	mixed
+	* @access   public
+	*/
+	function get_soapbody(){
+		return $this->soapresponse;
+	}
+
+	/**
+	* get the parsed SOAP Header (NULL if there was none)
+	*
+	* @return	mixed
+	* @access   public
+	*/
+	function get_soapheader(){
+		return $this->soapheader;
+	}
+
+	/**
+	* get the unparsed SOAP Header
+	*
+	* @return	string XML or empty if no Header
 	* @access   public
 	*/
 	function getHeaders(){
@@ -606,7 +629,11 @@ class soap_parser extends nusoap_base {
 	}
 }
 
-
+/**
+ * Backward compatibility
+ */
+class soap_parser extends nusoap_parser {
+}
 
 
 ?>
